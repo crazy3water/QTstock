@@ -47,9 +47,9 @@ class MyIndicatorTest(bt.Indicator):
         #                       period=self.p.period)
         # self.l.bot=bt.ind.EMA(self.mid*self.p.lowRate,\
         #                       period=self.p.period)
-
+        super(MyIndicatorTest, self).__init__()
         self.lines.top = bt.indicators.BollingerBands(self.datas[0], period=20).top
         self.lines.bot = bt.indicators.BollingerBands(self.datas[0], period=20).bot
-        super(MyIndicatorTest, self).__init__()
+
 
 

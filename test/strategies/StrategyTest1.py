@@ -21,6 +21,23 @@ class StrategyTest(MultiStrategy):
             return True
         return False
 
+    def boll_buy(self,code_i):
+        '''
+        使用布林策略 买入
+        :param code_i:
+        :return:
+        '''
+        now_p = self.datas[code_i][0]
+        bot_p = self.lines.bot[code_i][-1]
+        if self.datas[code_i][0] < self.lines.bot[code_i][-1]:
+            return True
+        return False
+
+    def boll_sell(self,code_i):
+        if self.datas[code_i][0] > self.lines.top[code_i][-1]:
+            return True
+        return False
+
     def high_RSI_max(self,code_i):
         '''
         判断RSI顶部  左侧 < 最顶部 > 右侧
@@ -55,7 +72,7 @@ class StrategyTest(MultiStrategy):
             if self.rsis[code_i][-1] < 35 \
                     and self.macd_ps[code_i][0]<0 \
                     and self.MACD_0(code_i)\
-                    and self.low_RSI_min(code_i):
+                    and self.low_RSI_min(code_i) or self.boll_buy(code_i):
                 return True
         return False
 
@@ -67,7 +84,7 @@ class StrategyTest(MultiStrategy):
         '''
         if self.day_count > 10:
             if self.rsis[code_i][-1] > 80 \
-                    and self.high_RSI_max(code_i):
+                    and self.high_RSI_max(code_i) or self.boll_sell(code_i):
                 return True
         return False
 

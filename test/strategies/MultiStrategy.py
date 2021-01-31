@@ -46,13 +46,15 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         self.macd_ps = []
         self.rsis = []
 
-        self.MACD_RSI_signal = MyIndicatorTest(codes=self.p.codes)
-
         # indicators 技术指标
         for index_data_name in self.index_data_names:
-            macd = bt.ind.MACDHisto(eval(index_data_name))
+            code_use = eval(index_data_name)
+            self.lines.top = bt.indicators.BollingerBands(code_use, period=20).top
+            self.lines.bot = bt.indicators.BollingerBands(code_use, period=20).bot
+
+            macd = bt.ind.MACDHisto(code_use)
             self.macd_ps.append(macd.lines.histo)
-            rsi = bt.ind.RelativeStrengthIndex(eval(index_data_name))
+            rsi = bt.ind.RelativeStrengthIndex(code_use)
             self.rsis.append(rsi.lines.rsi)
 
         buy_sigs = []
@@ -85,23 +87,9 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
 
     def get_buy_strategy(self,code_i):
         return False
-        # if self.day_count > 10:
-        #     if self.macd_ps[code_i][0]<0 and self.macd_ps[code_i][-2] < self.macd_ps[code_i][-1] and self.macd_ps[code_i][0] > self.macd_ps[code_i][-1] and \
-        #             self.rsis[code_i][0] < 40 and \
-        #             self.rsis[code_i][-1]<self.rsis[code_i][-2] and self.rsis[code_i][-1] < self.rsis[code_i][0]:
-        #         return True
-        #     else:
-        #         return False
-
 
     def get_sell_strategy(self,code_i):
         return False
-        # if self.day_count > 10:
-        #     if self.macd_ps[code_i][0]>0 and self.macd_ps[code_i][-1] >= self.macd_ps[code_i][-2] and self.macd_ps[code_i][0] < self.macd_ps[code_i][-1] and \
-        #             self.rsis[code_i][0] > 60:
-        #         return True
-        #     else:
-        #         return False
 
     def broker_buy_control(self,code_i):
         # 查看目前多少钱，够不够买 self.buy_nums
