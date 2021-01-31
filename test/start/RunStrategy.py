@@ -24,7 +24,7 @@ class RunStrtegy():
         self.ready_cerebro()    # 创建框架
         self.ready_broker()     # 准备券商（包括初始资金、印花税等）
         self.ready_strategy()   # 准备交易策略
-        self.ready_data((2015,1,1),(2018,12,31))    #准备数据
+        self.ready_data((2018,1,1),(2020,12,31))    #准备数据
         self.ready_analyzers()  #准备评价指标(年化利率等)
         self.main()
 
@@ -116,5 +116,5 @@ class RunStrtegy():
 
 if __name__ == "__main__":
     # RunStrtegy(codes=["000001","000589","002385","600893"])
-    RunStrtegy(codes=["000001"])
+    RunStrtegy(codes=["002385"])
     # RunStrtegy(codes=["002385"])

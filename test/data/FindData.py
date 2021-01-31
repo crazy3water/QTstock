@@ -17,11 +17,10 @@ class FindData(object):
         self.check_exits_files()
 
     def check_exits_files(self):
-        list_files = os.listdir(self.dataPath)
-        exist_codes =[file_name.split('_')[1] for file_name in list_files]
-
         # 检查指定文件夹中是否存在该代码的数据，如果存在则跳过，不存在去tushare下载
         if self.fromLocal:
+            list_files = os.listdir(self.dataPath)
+            exist_codes = [file_name.split('_')[1] for file_name in list_files]
             for codei in self.para["codes"]:
                 if codei not in exist_codes:
                     self.get_data_tushare(codei)

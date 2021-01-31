@@ -51,9 +51,7 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         # indicators 技术指标
         for index_data_name in self.index_data_names:
             macd = bt.ind.MACDHisto(eval(index_data_name))
-
             self.macd_ps.append(macd.lines.histo)
-
             rsi = bt.ind.RelativeStrengthIndex(eval(index_data_name))
             self.rsis.append(rsi.lines.rsi)
 

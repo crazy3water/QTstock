@@ -2,17 +2,13 @@ from test.strategies.MultiStrategy import MultiStrategy
 
 class StrategyTest(MultiStrategy):
     time_windows = 5
-    def low_RSI(self,code_i):
-        # 判断RSI底部
-        if self.rsis[code_i][0]>self.rsis[code_i][-1] and \
-                self.rsis[code_i][-2]>self.rsis[code_i][-1]:
-            return True
-        return False
-
     def low_RSI_min(self,code_i):
+        '''
+        判断RSI底部  左侧>最底部<右侧
+        :param code_i:
+        :return:
+        '''
         # 判断RSI前一天是时间窗口底部
-        prices_window = self.rsis[code_i].array[:self.day_count+1]
-        prices = self.rsis[code_i][0]
         if self.rsis[code_i][0]>self.rsis[code_i][-1] and \
                 self.rsis[code_i][-2]>self.rsis[code_i][-1]:
             return True
@@ -25,15 +21,53 @@ class StrategyTest(MultiStrategy):
             return True
         return False
 
+    def high_RSI_max(self,code_i):
+        '''
+        判断RSI顶部  左侧 < 最顶部 > 右侧
+        :param code_i:
+        :return:
+        '''
+        # 判断RSI前一天是时间窗口底部
+        if self.rsis[code_i][0] < self.rsis[code_i][-1] and \
+                self.rsis[code_i][-2]<self.rsis[code_i][-1]:
+            return True
+        return False
+
+    def high_MACD(self,code_i):
+        # 判断MACD顶部
+        if self.macd_ps[code_i][0]<self.macd_ps[code_i][-1] and \
+                self.macd_ps[code_i][-2]<self.macd_ps[code_i][-1]:
+            return True
+        return False
+
+    def MACD_0(self,code_i):
+        if -0.05< self.macd_ps[code_i][0] < 0.05 :
+            return True
+        return False
 
     def get_buy_strategy(self,code_i):
+        '''
+        买入逻辑
+        :param code_i:
+        :return:
+        '''
         if self.day_count > 10:
-            if self.rsis[code_i][0] < 35 and self.macd_ps[code_i][0]<0 and self.low_RSI(code_i) and self.low_RSI_min(code_i):
+            if self.rsis[code_i][-1] < 35 \
+                    and self.macd_ps[code_i][0]<0 \
+                    and self.MACD_0(code_i)\
+                    and self.low_RSI_min(code_i):
                 return True
         return False
+
     def get_sell_strategy(self,code_i):
+        '''
+        卖出逻辑
+        :param code_i:
+        :return:
+        '''
         if self.day_count > 10:
-            if self.rsis[code_i][0] > 60:
+            if self.rsis[code_i][-1] > 80 \
+                    and self.high_RSI_max(code_i):
                 return True
         return False
 
