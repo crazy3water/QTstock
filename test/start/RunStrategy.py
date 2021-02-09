@@ -13,44 +13,51 @@ from test.strategies import StrategyTest1
 
 class RunStrtegy():
     params = dict(
-        original_rate=[], # [("000001",0.2)]
+        original_rate=(), # [("000001",0.2)]
     )
-    def __init__(self,codes,sourceData = r"H:\MyProject\QuantitativeTrading\QT_2021_1_11\data\ts_data"):
+    def __init__(self,code,cash=1e4,
+                 fromLocal=False,
+                 sourceData = r"H:\MyProject\QuantitativeTrading\QT_2021_1_11\data\ts_data"):
         #准备数据
-        self.codes = codes
+        self.code = code
+        self.init_cash = cash
+        self.fromLocal = fromLocal
         self.sourceData = sourceData
 
         self.cerebro = None
         self.ready_cerebro()    # 创建框架
         self.ready_broker()     # 准备券商（包括初始资金、印花税等）
         self.ready_strategy()   # 准备交易策略
-        self.ready_data((2018,1,1),(2020,12,31))    #准备数据
+        self.ready_data(datetime.datetime(2020,1,1),datetime.datetime(2020,12,31))    #准备数据
         self.ready_analyzers()  #准备评价指标(年化利率等)
         self.main()
 
-    def check_data(self):
+    def check_data(self,fromDate,toDate):
         return FindData(dataPath=self.sourceData,
-                        codes=self.codes,
-                        fromLocal=False
+                        code=self.code,
+                        fromLocal=self.fromLocal,
+                        ktype='D',
+                        start=fromDate,
+                        end=toDate
                         )
 
     def ready_data(self,fromDate,toDate):
-        findData = self.check_data()
-        fromdate = datetime.datetime(fromDate[0], fromDate[1], fromDate[2])
-        todate = datetime.datetime(toDate[0], toDate[1], toDate[2])
+        findData = self.check_data(fromDate.strftime("%Y-%m-%d"),toDate.strftime("%Y-%m-%d"))
         # 在cerebro中添加数据
-        for code in self.codes:
-            data = findData.get_data(code,
-                                          "%d-%d-%d"%(fromDate[0], fromDate[1], fromDate[2]),
-                                          "%d-%d-%d"%(toDate[0], toDate[1], toDate[2])
-                                          )
-            feeddata = bt.feeds.PandasData(dataname=data,
-                                       fromdate=fromdate,
-                                       todate=todate
-                                       )
-            self.cerebro.adddata(feeddata, name="code_%s" % code)
+        data = findData.get_data(self.code)
 
-            self.params["original_rate"].append((code,"%.2f"%((data.close[-1] - data.close[0])/data.close[0]) ))
+        feeddata = bt.feeds.PandasData(dataname=data,
+                                       fromdate=fromDate,
+                                       todate=toDate,
+                                       timeframe=bt.TimeFrame.Days,
+                                   )
+        self.cerebro.adddata(feeddata, name="code_%s_5m" % self.code)
+        self.cerebro.resampledata(feeddata,
+                                  timeframe=bt.TimeFrame.Months,
+                                  compression=1,    # 下载数据是N分钟，compression就是N
+                                  name="code_%s" % self.code)
+
+        self.params["original_rate"] = (self.code,"%.2f%%"%((data.close[-1]-data.close[0])*100/data.close[0]) )
 
     def ready_cerebro(self):
         #准备cerebro
@@ -59,13 +66,14 @@ class RunStrtegy():
     def ready_broker(self):
         #准备代理
         #初始资金
-        self.cerebro.broker.set_cash(1e4)
+        self.cerebro.broker.set_cash(self.init_cash)
         #交易费用
         self.cerebro.broker.setcommission(commission=0.00003)
 
     def ready_strategy(self):
         self.cerebro.addstrategy(StrategyTest1.StrategyTest,
-                                    codes=self.codes)
+                                    code=self.code,
+                                 init_value=self.init_cash)
 
     def ready_analyzers(self):
         # Analyzers
@@ -88,15 +96,20 @@ class RunStrtegy():
     def plot(self):
         # 绘图
         params = dict(
-            style="candle",
-            barup="#FF0033",
-            bardown="#32CD32",
-            volup="#F66269",
-            voldown="#43A047",
+            style="bar",
+            barup="red",
+            bardown="green",
+            volup="red",
+            voldown="green",
+            volume=False,
         )
 
         self.cerebro.plot(
-            params=params
+            style="bar",
+            barup="red",
+            bardown="green",
+            volup="red",
+            voldown="green",
         )
 
     def main(self):
@@ -108,13 +121,13 @@ class RunStrtegy():
 
         print('\n', ratio_df.head())
 
-        for i in range(len(self.codes)):
-            print("股票code:{},原始收益:{}\n".format(self.params["original_rate"][i][0],self.params["original_rate"][i][1]) )
+        print("股票code:{},原始收益:{}\n".format(self.params["original_rate"][0],self.params["original_rate"][1]) )
 
-        self.plot()
+        self.plot() #start=datetime.date(2018, 1, 1), end=datetime.date(2019, 12, 31),
 
-
+9
 if __name__ == "__main__":
     # RunStrtegy(codes=["000001","000589","002385","600893"])
-    RunStrtegy(codes=["002385"])
-    # RunStrtegy(codes=["002385"])
+    RunStrtegy(code="002459",
+               fromLocal=True,
+               sourceData=r"D:\stock_analys\QTstock\data\ts_data")

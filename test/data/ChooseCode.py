@@ -1,4 +1,5 @@
 import tushare as ts
+from test.data.FindData import FindData
 import os
 import pandas as pd
 import datetime
@@ -31,3 +32,19 @@ class ChooseCode(object):
         :return:
         '''
         pass
+
+if __name__ == "__main__":
+    dataPath = r"D:\stock_analys\QTstock\data\ts_data"
+    codes = ["000001"]
+    fromLocal = False
+
+    findData = FindData(dataPath=dataPath,
+                         codes=codes,
+                         fromLocal=fromLocal
+                         )
+
+    data = findData.get_data(code=codes[0],
+                      start="2020-01-01",
+                      end="2020-12-31")
+
+    print(data.head())

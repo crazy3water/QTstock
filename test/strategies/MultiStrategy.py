@@ -25,7 +25,8 @@ def get_data(code):
 
 class MultiStrategy(bt.Strategy,BaseStrategy):
     params = (
-        ('codes',[]),
+        ('code',"000001"),
+        ('init_value',10000),
         ('maperiod', 15),
         ('printlog', False),
         # MACD
@@ -42,20 +43,24 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         self.day_count = 1
 
         #引用数据
-        self.index_data_names = ["self.dnames.code_"+str(code) for code in self.p.codes]
         self.macd_ps = []
         self.rsis = []
 
-        # indicators 技术指标
-        for index_data_name in self.index_data_names:
-            code_use = eval(index_data_name)
-            self.lines.top = bt.indicators.BollingerBands(code_use, period=20).top
-            self.lines.bot = bt.indicators.BollingerBands(code_use, period=20).bot
+        # 存储不同数据的技术指标
+        self.inds = dict()
+        # 存储特定股票的订单，key为股票的代码
+        self.orders = dict()
+        for i,d in enumerate(self.datas):
+            self.orders[d._name] = None
+            self.inds[d] = dict()
+            if d._name == "code_"+self.params.code: # 第一次add的数据
+                self.l.top = bt.indicators.BollingerBands(d, period=20).top
+                self.l.bot = bt.indicators.BollingerBands(d, period=20).bot
 
-            macd = bt.ind.MACDHisto(code_use)
-            self.macd_ps.append(macd.lines.histo)
-            rsi = bt.ind.RelativeStrengthIndex(code_use)
-            self.rsis.append(rsi.lines.rsi)
+                macd = bt.ind.MACDHisto(d)
+                self.macd_ps.append(macd.lines.histo)
+                rsi = bt.ind.RelativeStrengthIndex(d)
+                self.rsis.append(rsi.lines.rsi)
 
         buy_sigs = []
 
@@ -85,16 +90,16 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
             dt = dt or self.datas[0].datetime.date(0)
             print('%s, %s' % (dt.isoformat(), txt))
 
-    def get_buy_strategy(self,code_i):
+    def get_buy_strategy(self):
         return False
 
-    def get_sell_strategy(self,code_i):
+    def get_sell_strategy(self):
         return False
 
-    def broker_buy_control(self,code_i):
+    def broker_buy_control(self):
         # 查看目前多少钱，够不够买 self.buy_nums
         broker_value = self.broker.getvalue()   #   目前现金
-        return int(broker_value/(self.datas[code_i].close[0]*self.buy_nums*100))
+        return int(broker_value/(self.datas.close[0]*self.buy_nums*100))
 
     def next(self):
         # Simply log the closing price of the series from the reference
@@ -108,25 +113,22 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         # Check if we are in the market
         # if not self.position:#判断是否有仓位
 
-        for i in range(len(self.params.codes)):
-            if self.get_buy_strategy(i):
-                # if not self.positionsbyname["code_"+self.params.codes[i]]:
-                if self.broker_buy_control(i) > 0:
-                    code_data = eval("self.data"+str(i))
-                    self.order = self.buy(code_data,size=1000)
+        if self.get_buy_strategy():
+            # if not self.positionsbyname["code_"+self.params.codes[i]]:
+            if self.broker_buy_control() > 0:
+                self.order = self.buy(size=1000)
 
-        for i in range(len(self.params.codes)):
-            if self.get_sell_strategy(i):
-                num = int(self.positionsbyname["code_"+self.params.codes[i]].size/2)
-                if self.positionsbyname["code_"+self.params.codes[i]].size > 0:
-                    code_data = eval("self.data"+str(i))
-                    self.order = self.sell(code_data,size=num) #size 交易单位1股 size=100 一手   percents
+        if self.get_sell_strategy():
+            num = int(self.positionsbyname["code_"+self.params.code].size/2)
+            if self.positionsbyname["code_"+self.params.code].size > 0:
+                self.order = self.sell(size=num) #size 交易单位1股 size=100 一手   percents
 
         self.day_count += 1
 
     def stop(self):
-        self.log('(MA Period %2d) Ending Value %.2f' %
-                 (self.params.period_me1, self.broker.getvalue()), doprint=True)
+        self.log("代码：{},收益：{}".format(self.params.code,
+                                      (self.broker.getvalue() - self.params.init_value)*100/self.params.init_value),
+                 doprint=True)
 
 
 
