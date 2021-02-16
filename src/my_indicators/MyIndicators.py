@@ -30,12 +30,12 @@ class MyIndicatorTest(bt.Indicator):
     lines = ('mid','top','bot',)
     params = (("codes",[]),
                 ('maperiod',5),
-              ('period',3),
+              ('ema_10',10),
               ('highRate',1.2),
               ('lowRate',0.85),)
     #与价格在同一张图
     plotinfo = dict(subplot=False)
-    def __init__(self):
+    def __init__(self,data):
         # self.l.mid = bt.ind.EMA(self.data, period=self.p.maperiod)
         # self.l.now = bt.indicators.SimpleMovingAverage(
         #     self.data, period=self.p.maperiod)
@@ -48,8 +48,8 @@ class MyIndicatorTest(bt.Indicator):
         # self.l.bot=bt.ind.EMA(self.mid*self.p.lowRate,\
         #                       period=self.p.period)
         super(MyIndicatorTest, self).__init__()
-        self.lines.top = bt.indicators.BollingerBands(self.datas[0], period=20).top
-        self.lines.bot = bt.indicators.BollingerBands(self.datas[0], period=20).bot
+        self.l.mid = data - bt.ind.EMA(data, period=self.p.ema_10)
+
 
 
 

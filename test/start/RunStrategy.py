@@ -51,11 +51,11 @@ class RunStrtegy():
                                        todate=toDate,
                                        timeframe=bt.TimeFrame.Days,
                                    )
-        self.cerebro.adddata(feeddata, name="code_%s_5m" % self.code)
-        self.cerebro.resampledata(feeddata,
-                                  timeframe=bt.TimeFrame.Months,
-                                  compression=1,    # 下载数据是N分钟，compression就是N
-                                  name="code_%s" % self.code)
+        self.cerebro.adddata(feeddata, name="code_%s" % self.code)
+        # self.cerebro.resampledata(feeddata,
+        #                           timeframe=bt.TimeFrame.Months,
+        #                           compression=1,    # 下载数据是N分钟，compression就是N
+        #                           name="code_%s_resample" % self.code)
 
         self.params["original_rate"] = (self.code,"%.2f%%"%((data.close[-1]-data.close[0])*100/data.close[0]) )
 
@@ -125,9 +125,10 @@ class RunStrtegy():
 
         self.plot() #start=datetime.date(2018, 1, 1), end=datetime.date(2019, 12, 31),
 
-9
+
 if __name__ == "__main__":
     # RunStrtegy(codes=["000001","000589","002385","600893"])
-    RunStrtegy(code="002459",
-               fromLocal=True,
+    RunStrtegy(code="600519",
+               cash=1e6,
+               fromLocal=False,
                sourceData=r"D:\stock_analys\QTstock\data\ts_data")

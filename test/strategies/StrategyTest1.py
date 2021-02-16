@@ -62,18 +62,30 @@ class StrategyTest(MultiStrategy):
             return True
         return False
 
+    def statis_buy(self,now,data):
+        if self.win_statis(now, data) == 1 and self.rolling(now,data) == 1:  # 趋势上升
+            return True
+        return False
+
+    def statis_sell(self,now,data):
+        if self.win_statis(now, data) == 0:  # 趋势下降
+            return True
+        return False
+
     def get_buy_strategy(self):
         '''
         买入逻辑
         :param code_i:
         :return:
         '''
-        if self.day_count > 10:
-            if self.rsis[-1] < 35 \
-                    and self.macd_ps[0]<0 \
-                    and self.MACD_0()\
-                    and self.low_RSI_min():
-                return True
+        if self.day_count > self.win:
+            for i, d in enumerate(self.datas):
+                if d._name in self.inds.keys():
+                    now = d.array[self.day_count]
+                    data = d.array[self.day_count - self.win:self.day_count]
+                    self.trend_hist.append(self.win_statis(now, data))
+                    if self.statis_buy(now, data):
+                        return True
         return False
 
     def get_sell_strategy(self):
@@ -82,15 +94,19 @@ class StrategyTest(MultiStrategy):
         :param code_i:
         :return:
         '''
-        if self.day_count > 10:
-            if self.rsis[-1] > 80 \
-                    and self.high_RSI_max():
-                return True
+        if self.day_count > self.win:
+            for i, d in enumerate(self.datas):
+                if d._name in self.inds.keys():
+                    now = d.array[self.day_count]
+                    data = d.array[self.day_count - self.win:self.day_count]
+                    self.trend_hist.append(self.win_statis(now, data))
+                    if self.statis_sell(now,data):
+                        return True
         return False
 
     def next(self):
-        # Simply log the closing price of the series from the reference
-        self.log("code:{}".format(self.inds.keys()),doprint=True)
+        self.log("code:{}".format(self.inds.keys()),doprint=False)
+
 
         # Check if an order is pending ... if yes, we cannot send a 2nd one
         if self.order:
@@ -105,10 +121,10 @@ class StrategyTest(MultiStrategy):
                 self.order = self.buy(size=self.buy_nums)
 
         if self.get_sell_strategy():
-            num = int(self.positionsbyname["code_"+self.params.code].size/2)
-            if num<100:
-                num = int(self.positionsbyname["code_"+self.params.code].size)
+            # num = int(self.positionsbyname["code_"+self.params.code].size/2)
+            # if num<100:
+            #     num = int(self.positionsbyname["code_"+self.params.code].size)
             if self.positionsbyname["code_"+self.params.code].size > 0:
-                self.order = self.sell(size=num) #size 交易单位1股 size=100 一手   percents
+                self.order = self.sell(size=self.sell_nums) #size 交易单位1股 size=100 一手   percents
 
         self.day_count += 1

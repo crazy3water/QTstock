@@ -29,6 +29,8 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         ('init_value',10000),
         ('maperiod', 15),
         ('printlog', False),
+        #EMA
+        ('ema_10',10),
         # MACD
         ("period_me1",12),
         ("period_me2",26),
@@ -52,10 +54,9 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         self.orders = dict()
         for i,d in enumerate(self.datas):
             self.orders[d._name] = None
-            self.inds[d] = dict()
-            if d._name == "code_"+self.params.code: # 第一次add的数据
-                self.l.top = bt.indicators.BollingerBands(d, period=20).top
-                self.l.bot = bt.indicators.BollingerBands(d, period=20).bot
+            self.inds[d._name] = dict()
+            if d._name == "code_%s"%self.params.code: # 第一次add的数据
+                self.inds[d._name]["10"] = bt.ind.EMA(d, period=self.p.ema_10)
 
                 macd = bt.ind.MACDHisto(d)
                 self.macd_ps.append(macd.lines.histo)
@@ -99,7 +100,7 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
     def broker_buy_control(self):
         # 查看目前多少钱，够不够买 self.buy_nums
         broker_value = self.broker.getvalue()   #   目前现金
-        return int(broker_value/(self.datas.close[0]*self.buy_nums*100))
+        return int(broker_value/(self.data.close[0]*self.buy_nums))
 
     def next(self):
         # Simply log the closing price of the series from the reference
@@ -126,7 +127,7 @@ class MultiStrategy(bt.Strategy,BaseStrategy):
         self.day_count += 1
 
     def stop(self):
-        self.log("代码：{},收益：{}".format(self.params.code,
+        self.log("代码：{},收益：{:.2f}%".format(self.params.code,
                                       (self.broker.getvalue() - self.params.init_value)*100/self.params.init_value),
                  doprint=True)
 
